@@ -6,15 +6,11 @@ import time
 import secrets
 import keep_alive
 from discord.ext import commands
-# Import the required module for text 
-# to speech conversion
 from gtts import gTTS
 token = os.getenv('token')
 import urllib.parse
 import requests
-
-
-
+import asyncio
 
 
 
@@ -28,10 +24,6 @@ intents.members = True
 @bot.event
 async def on_ready():
   await bot.change_presence(activity=discord.Game(name="!help"))
-
-
-
-
 
 
 
@@ -49,36 +41,44 @@ async def conversation(ctx):
 
 
 
+@bot.command(name = "!join")
+async def foo(ctx):
+  await ctx.author.voice.channel.connect()
+
+@bot.command(name = "!dis")
+async def foo2(ctx):
+  await ctx.voice_client.disconnect()
+
 
 @bot.command(name = "!speak")
 async def speak(ctx):
-    channel = ctx.author.voice.channel
-    author = ctx.message.author
-    user_name = author.name
-    await channel.connect()
-    random_number = random.randint(0,700000000000000)
-    random_number_to_string = str(random_number)
-    guild = ctx.guild
-    voice_client: discord.VoiceClient = discord.utils.get(bot.voice_clients, guild=guild)
-    username_to_string = str(user_name)
-    message_content = ctx.message.content[6:50]
-    mytext = username_to_string + "says, " + message_content
-    language = 'en'
-    name_file_random = random_number
-    myobj = gTTS(text=mytext, lang=language, slow=False)
-    myobj.save("mp3_files/%s.mp3" % name_file_random)
-    audio_source = discord.FFmpegPCMAudio('fart1.mp3')
-    audio_source2 = discord.FFmpegPCMAudio('fart2.mp3')
-    audio_source3 = discord.FFmpegPCMAudio('fart3.mp3')
-    audio_voice = discord.FFmpegPCMAudio("mp3_files/" + random_number_to_string + ".mp3")
-    random_audio = [audio_source, audio_source2, audio_source3]
-    choose_random_audio = secrets.choice(random_audio)
-    if not voice_client.is_playing():
-        voice_client.play(audio_voice, after=None)
-        time.sleep(2)
-        os.remove("mp3_files/" + random_number_to_string + ".mp3")
-        time.sleep(4)
-        await ctx.voice_client.disconnect()
+  author = ctx.message.author
+  author_to_string = str(author)
+  author_to_string_no_numbers = author_to_string[:-5]
+  if not ctx.message.author.voice:
+    await ctx.send(f"{author_to_string_no_numbers}, you're not in a voice channel.")
+  channel = ctx.author.voice.channel
+  author = ctx.message.author
+  user_name = author.name
+  guild = ctx.guild
+  await channel.connect()
+  random_number = random.randint(0,700000000000000)
+  random_number_to_string = str(random_number)
+  voice_client: discord.VoiceClient = discord.utils.get(bot.voice_clients, guild=guild)
+  username_to_string = str(user_name)
+  message_content = ctx.message.content[6:50]
+  mytext = username_to_string + "says, " + message_content
+  language = 'en'
+  name_file_random = random_number
+  myobj = gTTS(text=mytext, lang=language, slow=False)
+  myobj.save("mp3_files/%s.mp3" % name_file_random)
+  audio_voice = discord.FFmpegPCMAudio("mp3_files/" + random_number_to_string + ".mp3")
+
+  voice_client.play(audio_voice)
+  await asyncio.sleep(2)
+  os.remove("mp3_files/" + random_number_to_string + ".mp3")
+  await asyncio.sleep(4)
+  await ctx.voice_client.disconnect()
 
 
 
@@ -97,8 +97,9 @@ async def fart(ctx):
     choose_random_audio = secrets.choice(random_audio)
     if not voice_client.is_playing():
         voice_client.play(choose_random_audio, after=None)
-        time.sleep(6)
+        await asyncio.sleep(6)
         await ctx.voice_client.disconnect()
+
 
 
 
